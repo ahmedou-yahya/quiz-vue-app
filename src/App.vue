@@ -1,5 +1,8 @@
 <template>
-  <div class="ctr">
+  <Navbar class="navbar" 
+  @sart-quiz="startQuiz"
+  />
+  <div v-if="hasRendred" class="ctr">
     <transition name="fade" mode="out-in">
       <Questions v-if="questionsAnswered<questions.length" 
       :questions="questions"
@@ -21,12 +24,16 @@
 <script>
 import Questions from './components/Questions.vue'
 import Result from './components/Result.vue'
+import Navbar from './components/Navbar.vue'
+const baseUrl = "https://quizapi.io/api/v1/questions"
+const apiKey = "bWpqRDg00RMqqmtveK8HmaZYfjd1XTR77fkSe4ow"
 export default {
   name: 'App',
   components: {
     Questions,
-    Result
-  },
+    Result,
+    Navbar
+},
   methods:{
     questionAnswered(is_correct){
       if(is_correct)
@@ -37,73 +44,36 @@ export default {
     reset(){
       this.questionsAnswered = 0;
       this.correctAnswers = 0;
+    },
+    startQuiz(cat, diff, num){
+      this.selectedCategory = cat
+      this.selectedDifficulty = diff
+      this.selectedNumber = num
+      this.getData()
+    },
+    async getData(){
+      try{
+        let res = await fetch(`${baseUrl}?apiKey=${apiKey}&category=${this.selectedCategory}&difficulty=${this.selectedDifficulty}&limit=${this.selectedNumber}`)
+        this.questions = await res.json();
+        console.log(this.questions)
+      } catch(error){
+        console.log(error)
+      }
+    }
+  },
+  computed:{
+    hasRendred(){
+      return this.questions.length!=0;
     }
   },
   data() {
     return {
       questionsAnswered: 0,
       correctAnswers: 0,
-      questions: [
-          {
-              q: 'What is 2 + 2?', 
-              answers: [
-                  {
-                      text: '4',
-                      is_correct: true
-                  },
-                  {
-                      text: '3',
-                      is_correct: false 
-                  },
-                  {
-                      text: 'Fish',
-                      is_correct: false 
-                  },
-                  {
-                      text: '5',
-                      is_correct: false 
-                  }
-              ] 
-          },
-          { 
-              q: 'How many letters are in the word "Banana"?', 
-              answers: [
-                  {
-                      text: '5',
-                      is_correct: false
-                  },
-                  {
-                      text: '7',
-                      is_correct: false 
-                  },
-                  {
-                      text: '6',
-                      is_correct: true 
-                  },
-                  {
-                      text: '12',
-                      is_correct: false 
-                  }
-              ] 
-          },
-          { 
-              q: 'Find the missing letter: C_ke', 
-              answers: [
-                  {
-                      text: 'e',
-                      is_correct: false
-                  },
-                  {
-                      text: 'a',
-                      is_correct: true 
-                  },
-                  {
-                      text: 'i',
-                      is_correct: false 
-                  }
-              ] 
-          },
-      ],
+      selectedCategory: '', 
+      selectedDifficulty: '', 
+      selectedNumber: '',
+      questions: [],
       results: [
           {
               min: 0,
@@ -126,6 +96,11 @@ export default {
 <style>
 * {
   box-sizing: border-box;
+}
+.navbar{
+  padding-bottom: 15px;
+  margin-bottom: 10px;
+  margin-right: 15px;
 }
 body {
   font-size: 20px;
@@ -184,7 +159,7 @@ body {
   background-color: #ff6372;
   transition: all 0.3s linear;
 }
-.status {
+.stats {
   position: absolute;
   top: 15px;
   left: 0;
